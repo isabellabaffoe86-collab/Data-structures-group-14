@@ -1,0 +1,687 @@
+#include <iostream>
+#include <string>
+#include <limits>
+#include <cctype>
+
+
+using namespace std;
+
+// ==========================================
+// EXAMINATION STRUCTURE
+// ==========================================
+
+struct Examination
+{
+    string courseCode;
+    string courseTitle;
+    string date;
+    string time;
+    string venue;
+    int numberOfStudents;
+
+    Examination* next;
+};
+
+// ==========================================
+// SINGLY LINKED LIST CLASS
+// ==========================================
+
+class ExaminationList
+{
+private:
+    Examination* head;
+
+public:
+
+    ExaminationList()
+    {
+        head = NULL;
+    }
+
+    // Search for an examination
+    Examination* search(string code)
+    {
+        Examination* current = head;
+
+        while (current != NULL)
+        {
+            if (current->courseCode == code)
+            {
+                return current;
+            }
+
+            current = current->next;
+        }
+
+        return NULL;
+    }
+
+    // Check whether a venue is already occupied
+    bool venueClash(string date, string time,
+                    string venue, string exceptCode = "")
+    {
+        Examination* current = head;
+
+        while (current != NULL)
+        {
+            if (current->date == date &&
+                current->time == time &&
+                current->venue == venue &&
+                current->courseCode != exceptCode)
+            {
+                return true;
+            }
+
+            current = current->next;
+        }
+
+        return false;
+    }
+
+    // ADD EXAMINATION
+    bool addExamination(string code, string title,
+                        string date, string time, int students)
+    {
+        if (search(code) != NULL)
+        {
+            cout << "\nError: Examination already exists!\n";
+            return false;
+        }
+
+        Examination* newNode = new Examination;
+
+        newNode->courseCode = code;
+        newNode->courseTitle = title;
+        newNode->date = date;
+        newNode->time = time;
+        newNode->venue = "Not Allocated";
+        newNode->numberOfStudents = students;
+        newNode->next = NULL;
+
+        if (head == NULL)
+        {
+            head = newNode;
+        }
+        else
+        {
+            Examination* current = head;
+
+            while (current->next != NULL)
+            {
+                current = current->next;
+            }
+
+            current->next = newNode;
+        }
+
+        cout << "\nExamination added successfully!\n";
+
+        return true;
+    }
+
+    // DELETE EXAMINATION
+    bool deleteExamination(string code)
+    {
+        if (head == NULL)
+        {
+            cout << "\nThe examination list is empty!\n";
+            return false;
+        }
+
+        Examination* current = head;
+        Examination* previous = NULL;
+
+        while (current != NULL)
+        {
+            if (current->courseCode == code)
+            {
+                if (previous == NULL)
+                {
+                    head = current->next;
+                }
+                else
+                {
+                    previous->next = current->next;
+                }
+
+                delete current;
+
+                cout << "\nExamination deleted successfully!\n";
+                return true;
+            }
+
+            previous = current;
+            current = current->next;
+        }
+
+        cout << "\nExamination not found!\n";
+        return false;
+    }
+
+    // SEARCH EXAMINATION
+    void displaySearch(string code)
+    {
+        Examination* exam = search(code);
+
+        if (exam == NULL)
+        {
+            cout << "\nExamination not found!\n";
+            return;
+        }
+
+        cout << "\n========== EXAMINATION DETAILS ==========\n";
+
+        cout << "Course Code: " << exam->courseCode << endl;
+        cout << "Course Title: " << exam->courseTitle << endl;
+        cout << "Date: " << exam->date << endl;
+        cout << "Time: " << exam->time << endl;
+        cout << "Venue: " << exam->venue << endl;
+
+        cout << "Number of Students: "
+             << exam->numberOfStudents << endl;
+
+        cout << "=========================================\n";
+    }
+
+    // UPDATE EXAMINATION
+    void updateExamination(string code)
+    {
+        Examination* exam = search(code);
+
+        if (exam == NULL)
+        {
+            cout << "\nExamination not found!\n";
+            return;
+        }
+
+        string newTitle, newDate, newTime;
+        int newStudents;
+
+        cout << "\nEnter new course title: ";
+        getline(cin, newTitle);
+
+        cout << "Enter new examination date: ";
+        getline(cin, newDate);
+
+        cout << "Enter new examination time: ";
+        getline(cin, newTime);
+
+        cout << "Enter new number of students: ";
+        if (!(cin >> newStudents) || newStudents <= 0)
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+            cout << "\nInvalid number of students!\n";
+            return;
+        }
+
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        if (exam->venue != "Not Allocated" &&
+            venueClash(newDate, newTime, exam->venue, code))
+        {
+            cout << "\nUpdate rejected: Venue clash detected!\n";
+            return;
+        }
+
+        exam->courseTitle = newTitle;
+        exam->date = newDate;
+        exam->time = newTime;
+        exam->numberOfStudents = newStudents;
+
+        cout << "\nExamination updated successfully!\n";
+    }
+
+    // DISPLAY ALL EXAMINATIONS
+    void displaySchedule()
+    {
+        if (head == NULL)
+        {
+            cout << "\nNo examination schedule available!\n";
+            return;
+        }
+
+        Examination* current = head;
+
+        cout << "\n========== UNIVERSITY EXAMINATION SCHEDULE ==========\n";
+
+        while (current != NULL)
+        {
+            cout << "\nCourse Code: " << current->courseCode;
+            cout << "\nCourse Title: " << current->courseTitle;
+            cout << "\nDate: " << current->date;
+            cout << "\nTime: " << current->time;
+            cout << "\nVenue: " << current->venue;
+
+            cout << "\nNumber of Students: "
+                 << current->numberOfStudents;
+
+            cout << "\n------------------------------------------------------\n";
+
+            current = current->next;
+        }
+    }
+
+    // DESTRUCTOR
+    ~ExaminationList()
+    {
+        Examination* current = head;
+
+        while (current != NULL)
+        {
+            Examination* temp = current;
+            current = current->next;
+
+            delete temp;
+        }
+    }
+};
+
+// ==========================================
+// QUEUE NODE STRUCTURE
+// ==========================================
+
+struct QueueNode
+{
+    string courseCode;
+    QueueNode* next;
+};
+
+// ==========================================
+// QUEUE CLASS
+// ==========================================
+
+class ExaminationQueue
+{
+private:
+    QueueNode* front;
+    QueueNode* rear;
+
+public:
+
+    ExaminationQueue()
+    {
+        front = NULL;
+        rear = NULL;
+    }
+
+    // CHECK WHETHER QUEUE IS EMPTY
+    bool isEmpty()
+    {
+        return front == NULL;
+    }
+
+    // ENQUEUE
+    void enqueue(string code)
+    {
+        QueueNode* newNode = new QueueNode;
+
+        newNode->courseCode = code;
+        newNode->next = NULL;
+
+        if (isEmpty())
+        {
+            front = rear = newNode;
+        }
+        else
+        {
+            rear->next = newNode;
+            rear = newNode;
+        }
+    }
+
+    // DEQUEUE
+    void dequeue()
+    {
+        if (isEmpty())
+        {
+            cout << "\nQueue is empty!\n";
+            return;
+        }
+
+        QueueNode* temp = front;
+
+        front = front->next;
+
+        if (front == NULL)
+        {
+            rear = NULL;
+        }
+
+        delete temp;
+    }
+
+    // REMOVE A DELETED EXAMINATION FROM QUEUE
+    void removeCode(string code)
+    {
+        QueueNode* current = front;
+        QueueNode* previous = NULL;
+
+        while (current != NULL)
+        {
+            if (current->courseCode == code)
+            {
+                QueueNode* temp = current;
+
+                if (previous == NULL)
+                {
+                    front = current->next;
+                }
+                else
+                {
+                    previous->next = current->next;
+                }
+
+                if (current == rear)
+                {
+                    rear = previous;
+                }
+
+                current = current->next;
+
+                delete temp;
+            }
+            else
+            {
+                previous = current;
+                current = current->next;
+            }
+        }
+    }
+
+    // DISPLAY QUEUE
+    void displayQueue()
+    {
+        if (isEmpty())
+        {
+            cout << "\nNo examinations waiting for venue allocation.\n";
+            return;
+        }
+
+        QueueNode* current = front;
+
+        cout << "\n========== EXAMINATION ALLOCATION QUEUE ==========\n";
+
+        while (current != NULL)
+        {
+            cout << current->courseCode << endl;
+            current = current->next;
+        }
+
+        cout << "==================================================\n";
+    }
+
+    // GET FRONT ELEMENT
+    string getFront()
+    {
+        if (isEmpty())
+        {
+            return "";
+        }
+
+        return front->courseCode;
+    }
+
+    // DESTRUCTOR
+    ~ExaminationQueue()
+    {
+        while (!isEmpty())
+        {
+            dequeue();
+        }
+    }
+};
+
+// ==========================================
+// INPUT VALIDATION FUNCTIONS
+// ==========================================
+
+string getText(string message)
+{
+    string value;
+
+    do
+    {
+        cout << message;
+        getline(cin, value);
+
+        if (value.empty())
+        {
+            cout << "Input cannot be empty. Try again.\n";
+        }
+
+    } while (value.empty());
+
+    return value;
+}
+
+int getNumber(string message)
+{
+    int number;
+
+    while (true)
+    {
+        cout << message;
+
+        if (cin >> number && number > 0)
+        {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return number;
+        }
+
+        cout << "Invalid input! Enter a positive number.\n";
+
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+}
+
+// ==========================================
+// MAIN FUNCTION
+// ==========================================
+
+int main()
+{
+    ExaminationList examinations;
+    ExaminationQueue allocationQueue;
+
+    int choice;
+
+    string code, title, date, time, venue;
+
+    do
+    {
+        cout << "\n";
+        cout << "============================================\n";
+        cout << "  UNIVERSITY EXAMINATION SCHEDULING SYSTEM\n";
+        cout << "============================================\n";
+
+        cout << "1. Add Examination\n";
+        cout << "2. Delete Examination\n";
+        cout << "3. Search Examination\n";
+        cout << "4. Display Examination Schedule\n";
+        cout << "5. Update Examination Details\n";
+        cout << "6. Allocate Examination Venue\n";
+        cout << "7. Manage Examination Queue\n";
+        cout << "8. Exit\n";
+
+        cout << "============================================\n";
+
+        cout << "Enter your choice: ";
+
+        if (!(cin >> choice))
+        {
+            cout << "\nInvalid input! Enter a number.\n";
+
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+            continue;
+        }
+
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        switch (choice)
+        {
+
+        // ==================================
+        // ADD EXAMINATION
+        // ==================================
+
+        case 1:
+
+            cout << "\n========== ADD EXAMINATION ==========\n";
+
+            code = getText("Enter course code: ");
+
+            title = getText("Enter course title: ");
+
+            date = getText("Enter examination date: ");
+
+            time = getText("Enter examination time: ");
+
+            {
+                int students = getNumber("Enter number of students: ");
+
+                if (examinations.addExamination(
+                    code, title, date, time, students))
+                {
+                    allocationQueue.enqueue(code);
+
+                    cout << "Examination added to allocation queue.\n";
+                }
+            }
+
+            break;
+
+        // ==================================
+        // DELETE EXAMINATION
+        // ==================================
+
+        case 2:
+
+            code = getText("Enter course code to delete: ");
+
+            if (examinations.deleteExamination(code))
+            {
+                allocationQueue.removeCode(code);
+            }
+
+            break;
+
+        // ==================================
+        // SEARCH EXAMINATION
+        // ==================================
+
+        case 3:
+
+            code = getText("Enter course code to search: ");
+
+            examinations.displaySearch(code);
+
+            break;
+
+        // ==================================
+        // DISPLAY SCHEDULE
+        // ==================================
+
+        case 4:
+
+            examinations.displaySchedule();
+
+            break;
+
+        // ==================================
+        // UPDATE EXAMINATION
+        // ==================================
+
+        case 5:
+
+            code = getText("Enter course code to update: ");
+
+            examinations.updateExamination(code);
+
+            break;
+
+        // ==================================
+        // ALLOCATE EXAMINATION VENUE
+        // ==================================
+
+        case 6:
+
+            if (allocationQueue.isEmpty())
+            {
+                cout << "\nNo examinations waiting for allocation!\n";
+                break;
+            }
+
+            code = allocationQueue.getFront();
+
+            cout << "\nNext examination for allocation: "
+                 << code << endl;
+
+            {
+                Examination* exam = examinations.search(code);
+
+                if (exam == NULL)
+                {
+                    allocationQueue.dequeue();
+
+                    cout << "Invalid queue record removed.\n";
+                    break;
+                }
+
+                venue = getText("Enter examination venue: ");
+
+                if (examinations.venueClash(
+                    exam->date, exam->time, venue))
+                {
+                    cout << "\nVenue clash detected!\n";
+                    cout << "Choose another venue.\n";
+                }
+                else
+                {
+                    exam->venue = venue;
+
+                    allocationQueue.dequeue();
+
+                    cout << "\nVenue allocated successfully!\n";
+                    cout << "Course: " << code << endl;
+                    cout << "Venue: " << venue << endl;
+                }
+            }
+
+            break;
+
+        // ==================================
+        // MANAGE EXAMINATION QUEUE
+        // ==================================
+
+        case 7:
+
+            allocationQueue.displayQueue();
+
+            break;
+
+        // ==================================
+        // EXIT
+        // ==================================
+
+        case 8:
+
+            cout << "\nThank you for using the University ";
+            cout << "Examination Scheduling System!\n";
+
+            break;
+
+        default:
+
+            cout << "\nInvalid choice! Select between 1 and 8.\n";
+
+        }
+
+    } while (choice != 8);
+
+    return 0;
+}
